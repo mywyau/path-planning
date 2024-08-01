@@ -9,8 +9,8 @@ class Robot:
         self.grid_size = grid_size
         self.map = np.zeros((grid_size, grid_size))  # 0 for unexplored, 1 for free space, -1 for obstacles
         self.visited = set()
+        self.path = [self.position]  # Path for DFS and backtracking
         self.sensors = self.initialize_sensors()
-        self.stack = [self.position]  # Stack for DFS
 
     def initialize_sensors(self):
         # Initialize sensors, if needed
@@ -42,6 +42,10 @@ class Robot:
     def is_obstacle(self, x, y):
         if x < 0 or x >= self.grid_size or y < 0 or y >= self.grid_size:
             return True  # Out of bounds is considered an obstacle
+        if self.map[x, y] == -1:
+            return True  # Already marked as obstacle
+        if self.map[x, y] == 1:
+            return False  # Already marked as free space
         # Simulate sensor reading: 10% chance of obstacle
         return np.random.random() < 0.1
 
@@ -62,22 +66,28 @@ class Robot:
     def is_visited(self, position):
         return position in self.visited
 
+    def all_spaces_explored(self):
+        # Check if there are any unexplored free spaces
+        return np.all((self.map == 1) | (self.map == -1))
+
     def explore(self):
-        while self.stack:
-            current_position = self.stack[-1]
+        while self.path:
+            current_position = self.path[-1]
             self.visited.add(current_position)
+
+            if self.all_spaces_explored():
+                break
 
             unvisited_neighbors = self.get_unvisited_neighbors(current_position)
             if unvisited_neighbors:
                 next_position = unvisited_neighbors[0]
                 self.move_to(next_position)
-                self.stack.append(next_position)
+                self.path.append(next_position)
             else:
-                self.stack.pop()  # Backtrack
-
-                # Perform random walk if stuck
-                if not self.stack:
-                    self.perform_random_walk()
+                # Backtrack along the path if no unvisited neighbors
+                self.path.pop()
+                if self.path:
+                    self.move_to(self.path[-1])
 
             yield self.map, self.position
 
@@ -117,7 +127,7 @@ class Robot:
             direction = np.random.choice(directions)
             self.move(direction)
             if not self.is_visited(self.position):
-                self.stack.append(self.position)
+                self.path.append(self.position)
                 break
 
     def display_map(self):
