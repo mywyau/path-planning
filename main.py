@@ -18,13 +18,13 @@ class Robot:
 
     def move(self, direction):
         x, y = self.position
-        if direction == 'up' and y > 0:
+        if direction == 'up' and y > 0 and self.map[x, y - 1] != -1:
             self.position = (x, y - 1)
-        elif direction == 'down' and y < self.grid_size - 1:
+        elif direction == 'down' and y < self.grid_size - 1 and self.map[x, y + 1] != -1:
             self.position = (x, y + 1)
-        elif direction == 'left' and x > 0:
+        elif direction == 'left' and x > 0 and self.map[x - 1, y] != -1:
             self.position = (x - 1, y)
-        elif direction == 'right' and x < self.grid_size - 1:
+        elif direction == 'right' and x < self.grid_size - 1 and self.map[x + 1, y] != -1:
             self.position = (x + 1, y)
         # Simulate movement delay, sensor update, etc.
         self.update_map()
